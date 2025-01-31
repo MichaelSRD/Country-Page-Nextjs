@@ -1,101 +1,222 @@
+'use client'
 import Image from "next/image";
+import { Button } from "./components/ButtonRegion";
+import { useEffect, useRef, useState } from "react";
+import  PaisSkeleton  from "./components/CountrySqueleton";
+import Link from "next/link";
+
+
+interface Country {
+  name: {
+    common: string
+    official: string
+  }
+  fifa: string
+  region: string
+  subregion: string
+  flags: {
+    svg: string
+  }
+   population: number
+  area: number
+  independent: boolean
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const data = ['Africa', 'Americas', 'Asia', 'Europe', 'Oceania'];
+  const [statu, setStatu] = useState<boolean | null>(null)
+  const [query, setQuery] = useState("")
+  const [sort, setSort ]= useState('population')
+  const [results, setResults] = useState<Country[]>([])
+  const [loading, setLoading] = useState(false)
+  const [itemCount, setItemCount] = useState(7)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [region, setRegion] = useState<string[]>([])
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const calculateItemCount = () => {
+      if (containerRef.current) {
+        const containerHeight = containerRef.current.clientHeight
+        const itemHeight = 40 // Altura estimada de cada elemento del esqueleto
+        const newItemCount = Math.max(5, Math.floor(containerHeight / itemHeight))
+        setItemCount(newItemCount)
+      }
+    }
+    calculateItemCount()
+    window.addEventListener("resize", calculateItemCount)
+
+    return () => window.removeEventListener("resize", calculateItemCount)
+  }, [])
+
+  const searchCountries = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`https://restcountries.com/v3.1/all`)
+      const data = await response.json()
+
+      const filteredCountries = data.filter(
+        (country: Country) =>
+          country.name.common.toLowerCase().includes(query.toLowerCase()) ||
+          country.region.toLowerCase().includes(query.toLowerCase()) ||
+          (country.subregion && country.subregion.toLowerCase().includes(query.toLowerCase())),
+      )
+      setResults(filteredCountries)
+    } catch (err) {
+      console.error("Error fetching countries:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+    const applyFilters = () => {
+    let filteredResults = [...results]
+
+    // Apply region filter
+    if (region.length > 0) {
+      filteredResults = filteredResults.filter((country: Country) => region.includes(country.region))
+    }
+
+    // Apply status filter
+    if (statu !== null) {
+      filteredResults = filteredResults.filter((country: Country) => country.independent === statu)
+    }
+
+    // Apply sorting
+    filteredResults.sort((a: Country, b: Country) => {
+      if (sort === "population") {
+        return b.population - a.population
+      } else if (sort === "name") {
+        return a.name.common.localeCompare(b.name.common)
+      } else if (sort === "area") {
+        return b.area - a.area
+      }
+      return 0
+    })
+
+    return filteredResults
+  }
+
+  // useEffect(() => {
+  //   searchCountries()
+  // },[query,sort,region,statu])
+
+  useEffect(() => {
+    searchCountries()
+  }, [query])
+
+  const searchCountryInput = async ()=>{
+     try {
+      const response = await fetch(`https://restcountries.com/v3.1/all`);
+      const data = await response.json();
+      const filteredCountries = data.filter(
+        (country: Country) =>
+          country.name.common.toLowerCase().includes(query.toLowerCase()) ||
+          country.region.toLowerCase().includes(query.toLowerCase()) ||
+          (country.subregion && country.subregion.toLowerCase().includes(query.toLowerCase())),
+      )
+      setResults(filteredCountries)
+     } catch (error) {
+      
+     }
+  }
+ 
+ const handledInput = (e: string)=>{
+     setQuery(e)
+    searchCountryInput()
+ }
+
+  const handledStatu = (estatu: boolean)=>{
+      if (estatu == statu ) {
+        setStatu(null)
+      }else{
+        setStatu(estatu)
+      }
+      
+  }
+ const handledRegion = (newRegion: string)=>{
+    console.log(region);
+    if(region.includes(newRegion)){
+      setRegion(prevRegions => prevRegions.filter(region => region !== newRegion)); // Usando función de actualización
+      console.log("Regiones actualizadas:", region);
+    }else{
+      setRegion(prevRegions => [...prevRegions, newRegion]); // Usando función de actualización
+    console.log("Regiones actualizadas:", );
+    }
+    
+ }
+
+  return (
+    <div>
+      <div className=" bg-[#1B1D1F] rounded-lg px-4 py-7 grid grid-cols-1 md:grid-cols-[22%_1fr] gap-4">
+        <p>Found {applyFilters().length} countries</p>
+        <div className=" flex relative w-full md:w-[45%] mt-4 md:mt-0 justify-end justify-self-end ">
+          <Image alt="lupa de busqueda"src="/search.svg" width={25} height={25} className=" absolute top-[50%]  translate-y-[-50%] left-1 "  />
+          <input type="text" placeholder="Search by Name, Region, Subregion" onChange={(e)=>handledInput(e.target.value)} className=" md:w-full md-[250px] bg-[#282B30] rounded-lg p-2 w-full pl-9 " />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <div>
+        <p className="mt-3">Sort by</p>
+        <div>
+          <select  onChange={(e)=>setSort(e.target.value)} value={sort}  className=" bg-[#1B1D1F] rounded-lg p-2 w-full mt-2 border-2 border-[#282B30]">
+            <option value="population">Population</option>
+            <option value="name">Name</option>
+            <option value="area">Area(km²)</option>
+          </select>
+        </div>
+        <div className=" mt-3 mb-8 " >
+          <p className="mb-2">Region</p>
+          <div className="flex flex-wrap  gap-2">
+          {data.map((item, index)=>(
+            <Button key={index} texto={item} click={()=>handledRegion(item)} />
+          ))}
+          </div>
+        </div>
+        <div>
+          <p className="mb-2">Status</p>
+          <div className="flex items-center space-x-3 ">
+            <span className={` cursor-pointer   border-2  flex  rounded-md w-6 h-6 ${ statu == true ? 'bg-[#4E80EE] border-[#4E80EE] ':'border-white'  } `} onClick={()=>handledStatu(true)} > { statu == true && (
+              <Image alt="" src="Done_round.svg" width={20} height={20} />
+            )  }   </span>
+            <p>Member of the United Nations</p>
+          </div>
+          <div className="flex items-center space-x-3 mt-2 ">
+            <span className={`  cursor-pointer  border-2  flex  rounded-md w-6 h-6 ${ statu == false ? 'bg-[#4E80EE] border-[#4E80EE] ':'border-white'  } `} onClick={()=>handledStatu(false)} > { statu == false && (
+              <Image alt="" src="Done_round.svg" width={20} height={20} />
+            )  }   </span>
+            <p>Indepent</p>
+          </div>
+        </div>
+        </div>
+        <div ref={containerRef} className="mt-5 shadow-lg pb-3 px-5 rounded-md ">
+          <div className=" pb-3 grid md:grid-cols-5  grid-cols-[50px_1fr_1fr_1fr] gap-4 justify-between items-center mb-3  border-b-2 border-[#282B30]">
+            <p>Flag</p>
+            <p>Name</p>
+            <p>Population</p>
+            <p>Area (km²)</p>
+            <p className=" hidden md:block " >Region</p>
+          </div>
+          <div className="space-y-3">
+          {loading
+              ? [...Array(itemCount)].map((_, index) => <PaisSkeleton key={index} />)
+              : applyFilters().map((country, index) => (
+                  <div key={index} className="grid grid-cols-[max-content_1fr_1fr_1fr] gap-4 items-center justify md:grid-cols-5  ">
+                    <Link href={`/detailCountry/${country.fifa }`} >
+                    <Image
+                      src={country.flags.svg || "/placeholder.svg"}
+                      alt={`Flag of ${country.name.common}`}
+                      className="rounded-md cursor-pointer "
+                      width={50}
+                      height={40}
+                    />
+                     </Link>
+                    <p>{country.name.common}</p>
+                    <p>{country.population.toLocaleString()}</p>
+                    <p>{country.area.toLocaleString()}</p>
+                    <p className=" hidden md:block " >{country.region}</p>
+                 
+                  </div>
+                ))}
+          </div>  
+        </div>
+      </div>
     </div>
   );
 }
