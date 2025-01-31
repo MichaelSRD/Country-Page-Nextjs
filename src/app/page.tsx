@@ -95,10 +95,6 @@ export default function Home() {
     return filteredResults
   }
 
-  // useEffect(() => {
-  //   searchCountries()
-  // },[query,sort,region,statu])
-
   useEffect(() => {
     searchCountries()
   }, [query])
@@ -133,13 +129,12 @@ export default function Home() {
       
   }
  const handledRegion = (newRegion: string)=>{
-    console.log(region);
+    
     if(region.includes(newRegion)){
-      setRegion(prevRegions => prevRegions.filter(region => region !== newRegion)); // Usando función de actualización
-      console.log("Regiones actualizadas:", region);
+      setRegion(prevRegions => prevRegions.filter(region => region !== newRegion)); // Usando función de 
     }else{
       setRegion(prevRegions => [...prevRegions, newRegion]); // Usando función de actualización
-    console.log("Regiones actualizadas:", );
+    
     }
     
  }
