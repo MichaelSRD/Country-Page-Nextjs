@@ -111,7 +111,7 @@ export default function Home() {
       )
       setResults(filteredCountries)
      } catch (error) {
-      
+       console.error("Error fetching countries:", error)
      }
   }
  
