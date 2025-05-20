@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${beVietnamPro.className} antialiased`}
+        className={`${beVietnamPro.className} antialiased text-white`}
       >
         <div className=" h-[290px] flex justify-center relative">
         <Image alt=""src="/hero-image.jpg" fill className=" -z-10 object-cover  "   />
