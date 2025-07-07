@@ -51,7 +51,7 @@ export default function Home() {
   const searchCountries = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`https://restcountries.com/v3.1/all?fields=name,capital,currencies,`)
+      const response = await fetch(`https://restcountries.com/v3.1/all?fields=name,capital,currencies,region,area,fifa,population,subregion,flags,population,independent,`)
       const data = await response.json()
 
       const filteredCountries = data.filter(
